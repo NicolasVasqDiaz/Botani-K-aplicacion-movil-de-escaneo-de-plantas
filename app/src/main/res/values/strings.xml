@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Botani-K_Aplicacion de escaneo de plantas</string>
+    <!-- TODO: reemplaza con el ID de cliente web (OAuth 2.0) de Firebase Console:
+         Proyecto botani-k > Authentication > Sign-in method > Google > ID de cliente web.
+         Sin este valor el botón Google mostrará un aviso de configuración. -->
+    <string name="default_web_client_id">143007902625-m1m35re0nkcpd8rvpbmrmea8er1inotb.apps.googleusercontent.com</string>
+</resources>

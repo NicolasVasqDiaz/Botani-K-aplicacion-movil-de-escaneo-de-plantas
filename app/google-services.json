@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "143007902625",
+    "project_id": "botani-k",
+    "storage_bucket": "botani-k.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143007902625:android:c55714563f65b30b75b9e0",
+        "android_client_info": {
+          "package_name": "com.example.botani_k_aplicaciondeescaneodeplantas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "143007902625-iv4k5qfbphpcjsqaacutudosukn78ego.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.botani_k_aplicaciondeescaneodeplantas",
+            "certificate_hash": "a6829dfa0a62d2fdce5e6fd3d2fe82b633fcbcb1"
+          }
+        },
+        {
+          "client_id": "143007902625-m1m35re0nkcpd8rvpbmrmea8er1inotb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUuS3heBaHuEc0xr-iwDq91nEA5dEHzAk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "143007902625-m1m35re0nkcpd8rvpbmrmea8er1inotb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

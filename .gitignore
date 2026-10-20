@@ -7,9 +7,17 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/appInsightsSettings.xml
+/.idea/vcs.xml
 .DS_Store
 /build
 /captures
+seed/node_modules/
+seed/serviceAccountKey.json
 .externalNativeBuild
 .cxx
 local.properties
+
+# Herramientas de otros agentes / entornos de desarrollo
+# (`.opencode/` NO se ignora: contiene los skills de práctica del equipo)
+/deepseek-harness/

@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Botani-K_Aplicacion de escaneo de plantas"
+rootProject.name = "com.botanik.app"
 include(":app")

@@ -3,8 +3,9 @@
  * NO repite las 20 especies del primer seed (seed.js).
  *
  * Uso:
- *   1. Coloca serviceAccountKey.json en esta misma carpeta
- *   2. cd seed && npm install firebase-admin
+ *   1. Descarga tu Service Account key y colocala en esta carpeta
+ *      (ver README.md de esta carpeta: NUNCA se sube al repositorio)
+ *   2. cd seed && npm install
  *   3. node seed_cajamarca_extra.js   (o: npm run seed:extra)
  *
  * Seguro para re-ejecutar: usa merge y omite los campos declarados como
@@ -12,16 +13,10 @@
  * manualmente a Firestore.
  */
 
-const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { initializeFirebaseApp } = require('./firebaseCredentials');
 
-const serviceAccount = require('./serviceAccountKey.json');
-
-initializeApp({
-  credential: cert(serviceAccount),
-});
-
-const db = getFirestore();
+const db = getFirestore(initializeFirebaseApp());
 const catalogRef = db.collection('catalog');
 
 // -------------------------------------------------------------

@@ -99,13 +99,20 @@ Room es la fuente de verdad inmediata; la nube sincroniza en segundo plano.
 
 2. **Crear `local.properties` en la raíz:**
 
+   Android Studio lo genera solo al abrir el proyecto. Solo necesita el SDK path:
+
    ```properties
    sdk.dir=<ruta al Android SDK>
-   CLOUDINARY_CLOUD_NAME=kroz25nj
-   CLOUDINARY_UPLOAD_PRESET=botanik_unsigned
    ```
 
+   > La configuración de Cloudinary **ya viene en `gradle.properties`** (que sí
+   > se versiona), así que no hay que escribirla a mano. Esos valores no son
+   > secretos: el preset `unsigned` está diseñado para apps cliente y ya viaja
+   > dentro del APK.
+
 3. **Colocar `google-services.json` en `app/`** (descargado desde Firebase Console).
+   Este archivo **sí se versiona**: no contiene claves privadas, solo la
+   configuración del cliente (API key restringida por package name + SHA-1).
 
 4. **Registrar SHA-1 de debug en Firebase Console:**
 
@@ -119,14 +126,20 @@ Room es la fuente de verdad inmediata; la nube sincroniza en segundo plano.
    ./gradlew assembleDebug
    ```
 
-6. **Seed del catálogo**
+6. **(Opcional) Seed del catálogo**
+
+   ⚠️ **El seed solo hace falta si la colección `catalog` está vacía.** Los
+   datos ya viven en Firestore, así que un clon limpio **funciona sin correrlo**.
+
+   Para poblarla (o recargarla) necesitas tu propia Service Account key:
 
    ```bash
    cd seed
    npm install
-   # Colocar serviceAccountKey.json (descargado desde Firebase Console → Cuentas de servicio)
-   node seed.js              # 20 plantas (seed principal)
-   node seed_cajamarca_extra.js   # +20 plantas (flora peruana, prioridad Cajamarca)
+   # Descarga tu key y colócala en seed/ (ver seed/README.md — NUNCA se sube al repo)
+   npm run check       # verifica credenciales y estado del catálogo
+   npm run seed        # 20 plantas (seed principal)
+   npm run seed:extra  # +20 plantas (flora peruana, prioridad Cajamarca)
    ```
 
    Esto pobla la colección `catalog` con 40 plantas endémicas y nativas.

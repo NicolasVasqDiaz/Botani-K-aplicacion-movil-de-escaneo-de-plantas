@@ -4,6 +4,7 @@
   "description": "",
   "main": "seed.js",
   "scripts": {
+    "check": "node checkEnv.js",
     "seed": "node seed.js",
     "seed:extra": "node seed_cajamarca_extra.js",
     "test": "echo \"Error: no test specified\" && exit 1"

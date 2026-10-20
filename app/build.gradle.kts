@@ -19,10 +19,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Configuración de Cloudinary. Se lee de gradle.properties (versionado)
+        // con un valor por defecto para que el build nunca falle. NO es un
+        // secreto: el preset "unsigned" ya viaja dentro del APK.
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME",
-            "\"${project.findProperty("CLOUDINARY_CLOUD_NAME")}\"")
+            "\"${project.findProperty("CLOUDINARY_CLOUD_NAME") ?: "kroz25nj"}\"")
         buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET",
-            "\"${project.findProperty("CLOUDINARY_UPLOAD_PRESET")}\"")
+            "\"${project.findProperty("CLOUDINARY_UPLOAD_PRESET") ?: "botanik_unsigned"}\"")
     }
     buildFeatures {
         compose = true

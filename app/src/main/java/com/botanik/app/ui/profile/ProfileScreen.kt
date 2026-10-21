@@ -229,7 +229,7 @@ private fun ProfileAvatar(
     photoUrl: String?,
     name: String?,
     isSaving: Boolean,
-    onPickPhoto: (String) -> Unit,
+    onPickPhoto: () -> Unit,
     onRemovePhoto: () -> Unit
 ) {
     Box(contentAlignment = Alignment.Center) {
@@ -280,12 +280,18 @@ private fun ProfileAvatar(
                     )
                 }
             } else {
-                Icon(
-                    imageVector = Icons.Rounded.CameraAlt,
-                    contentDescription = "Cambiar foto",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
+                IconButton(
+                    onClick = onPickPhoto,
+                    enabled = !isSaving,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CameraAlt,
+                        contentDescription = "Cambiar foto",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }

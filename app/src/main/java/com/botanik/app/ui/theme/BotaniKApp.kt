@@ -16,6 +16,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.botanik.app.domain.model.AuthState
+import com.botanik.app.ui.acercade.AcercaDeScreen
 import com.botanik.app.ui.auth.LoginScreen
 import com.botanik.app.ui.auth.RegisterScreen
 import com.botanik.app.ui.auth.SignInScreen
@@ -132,6 +133,11 @@ fun BotaniKApp() {
                         }
                     )
                 }
+                composable(BotaniKRoute.AcercaDe.route) {
+                    AcercaDeScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
                 composable(
                     route = BotaniKRoute.Catalog.route,
                     arguments = listOf(
@@ -195,6 +201,7 @@ fun BotaniKApp() {
                 }
                 composable(BotaniKRoute.Profile.route) {
                     ProfileScreen(
+                        navController = navController,
                         onLogout = {
                             navController.navigate(BotaniKRoute.Login.route) {
                                 popUpTo(0) { inclusive = true }

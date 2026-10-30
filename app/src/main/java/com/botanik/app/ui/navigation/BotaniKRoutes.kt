@@ -11,6 +11,7 @@ sealed class BotaniKRoute(val route: String) {
             "catalog?userPhotoUrl=${userPhotoUrl.orEmpty()}"
         const val ARG_USER_PHOTO_URL = "userPhotoUrl"
     }
+    data object AcercaDe : BotaniKRoute("acerca_de")
     data object PlantDetail : BotaniKRoute("plant_detail/{plantId}?userPhotoUrl={userPhotoUrl}") {
         fun createRoute(plantId: String, userPhotoUrl: String? = null) =
             "plant_detail/$plantId?userPhotoUrl=${userPhotoUrl.orEmpty()}"

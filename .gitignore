@@ -38,3 +38,8 @@ seed/.env
 # Herramientas de otros agentes / entornos de desarrollo
 # (`.opencode/` NO se ignora: contiene los skills de practica del equipo)
 /deepseek-harness/
+
+# Modelo de identificación de plantas (Bloque 6A)
+# plantnet.tflite (~47 MB) NO se versiona; descargar de Hugging Face.
+# Ver SETUP_OTRA_COMPUTADORA.md o el prompt del Bloque 6A.
+app/src/main/assets/plantnet.tflite

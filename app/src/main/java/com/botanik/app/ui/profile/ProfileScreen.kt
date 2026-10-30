@@ -1,5 +1,7 @@
 package com.botanik.app.ui.profile
 
+import androidx.navigation.NavController
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.botanik.app.ui.navigation.BotaniKRoute
 import com.botanik.app.ui.theme.*
 
 /**
@@ -36,7 +39,7 @@ import com.botanik.app.ui.theme.*
  *         pantalla solo dibuja y emite intención de usuario.
  */
 @Composable
-fun ProfileScreen(
+fun ProfileScreen(navController: NavController,/*<- se hace uso del navController*/
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -49,6 +52,7 @@ fun ProfileScreen(
     ) { uri ->
         uri?.let { viewModel.onPhotoSelected(it) }
     }
+    Button(onClick = {navController.navigate(BotaniKRoute.AcercaDe.route)} ){Text("Acerca de")}
 
     LaunchedEffect(uiState.message) {
         uiState.message?.let { message ->

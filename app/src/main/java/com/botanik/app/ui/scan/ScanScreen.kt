@@ -131,5 +131,61 @@ fun ScanScreen(
                 onCancel = viewModel::onDismiss
             )
         }
+
+        // Overlay: identificando planta
+        if (uiState is ScanUiState.Identifying) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(color = PrimaryGreen)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Identificando planta...", color = TextPrimary)
+                    }
+                }
+            }
+        }
+
+        // Overlay: planta identificada
+        if (uiState is ScanUiState.Identified) {
+            val state = uiState as ScanUiState.Identified
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("🌱 Planta identificada", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(state.speciesName, style = MaterialTheme.typography.bodyLarge, color = PrimaryGreen)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.proceedAfterIdentification(state.photoUri) },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                        ) {
+                            Text("Continuar", color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

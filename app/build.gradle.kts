@@ -66,6 +66,11 @@ dependencies {
     implementation("androidx.camera:camera-view:1.4.1")
     // Coil para cargar imágenes (Fase 4)
     implementation("io.coil-kt:coil-compose:2.7.0")
+    // LiteRT (identificación de plantas on-device, Bloque 6A)
+    // Nota: se usa litert 2.1.3 (compatible con Kotlin 2.2.0 del proyecto).
+    //       litert-gpu no está disponible en esta versión; se usa CPU.
+    //       El GPU delegate se añadirá cuando se actualice Kotlin a 2.4+.
+    implementation("com.google.ai.edge.litert:litert:2.1.3")
     // Decodificador SVG para Coil: los placeholders del catálogo (placehold.co)
     // y algunos iconos se sirven como SVG, que Coil no decodifica por defecto.
     implementation("io.coil-kt:coil-svg:2.7.0")

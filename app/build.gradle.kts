@@ -49,6 +49,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
 
     implementation("com.google.dagger:hilt-android:2.60.1")
+    implementation(libs.androidx.compose.remote.creation.core)
     ksp("com.google.dagger:hilt-android-compiler:2.60.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 

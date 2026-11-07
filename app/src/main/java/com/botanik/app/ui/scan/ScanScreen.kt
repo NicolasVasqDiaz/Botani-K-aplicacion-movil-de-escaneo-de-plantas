@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.botanik.app.domain.model.PlantIdentification
 import com.botanik.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,14 +25,25 @@ import com.botanik.app.ui.theme.*
 fun ScanScreen(
     onBrowseCatalog: () -> Unit,
     onPhotoReady: (String) -> Unit,
+    onNavigateToPlantDetail: (plantId: String, photoUrl: String) -> Unit,
     viewModel: ScanViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Flujo sin identificación (fallback del modelo global): navegar a catálogo
     LaunchedEffect(uiState) {
         val state = uiState
         if (state is ScanUiState.PhotoReady) {
             onPhotoReady(state.photoUri)
+            viewModel.onDismiss()
+        }
+    }
+
+// Flujo con match en catálogo: navegar DIRECTO a la ficha (no al catálogo)
+    LaunchedEffect(uiState) {
+        val state = uiState
+        if (state is ScanUiState.Matched) {
+            onNavigateToPlantDetail(state.plantId, state.photoUrl)
             viewModel.onDismiss()
         }
     }
@@ -49,7 +61,10 @@ fun ScanScreen(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(Icons.Filled.Eco, contentDescription = null, tint = PrimaryGreen)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -150,42 +165,35 @@ fun ScanScreen(
                     ) {
                         CircularProgressIndicator(color = PrimaryGreen)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("Identificando planta...", color = TextPrimary)
+                        Text("Bot está identificando...", color = TextPrimary)
                     }
                 }
             }
         }
 
-        // Overlay: planta identificada
+        // Diálogo: elección entre las opciones top-3
         if (uiState is ScanUiState.Identified) {
             val state = uiState as ScanUiState.Identified
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("🌱 Planta identificada", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(state.speciesName, style = MaterialTheme.typography.bodyLarge, color = PrimaryGreen)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.proceedAfterIdentification(state.photoUri) },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
-                        ) {
-                            Text("Continuar", color = Color.White)
-                        }
-                    }
-                }
-            }
+            IdentificationResultDialog(
+                identifications = state.identifications,
+                onSelect = { identification ->
+                    viewModel.onIdentificationSelected(identification)
+                },
+                onDismiss = { viewModel.onDismiss() }
+            )
+        }
+
+        // Diálogo: la especie elegida no está en catálogo
+        if (uiState is ScanUiState.ShowingCatalogFallback) {
+            val state = uiState as ScanUiState.ShowingCatalogFallback
+            CatalogFallbackDialog(
+                scientificName = state.scientificName,
+                onSearchCatalog = {
+                    onPhotoReady(state.cloudinaryUrl)
+                    viewModel.onDismiss()
+                },
+                onDismiss = { viewModel.onDismiss() }
+            )
         }
     }
 }

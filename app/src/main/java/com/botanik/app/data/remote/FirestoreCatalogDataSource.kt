@@ -37,8 +37,8 @@ class FirestoreCatalogDataSource @Inject constructor(
     private fun DocumentSnapshot.toCatalogPlant(): CatalogPlant? {
         if (!exists()) return null
         return CatalogPlant(
-            id = id,
-            commonName = getString("commonName") ?: return null,
+            id = this.id,
+            commonName = getString("commonName") ?: "",
             scientificName = getString("scientificName") ?: "",
             family = getString("family") ?: "",
             region = getString("region") ?: "",

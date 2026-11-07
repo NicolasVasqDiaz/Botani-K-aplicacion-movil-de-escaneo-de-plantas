@@ -37,13 +37,11 @@ class CatalogRepositoryImpl @Inject constructor(
     override val isServingFromCache: Flow<Boolean> = _isServingFromCache.asStateFlow()
 
     override fun getAll(): Flow<UiState<List<CatalogPlant>>> = flow {
-        emit(UiState.Loading)
-
-        // 1. Copia local primero (offline-first, inmediato).
+        emit(UiState.Loading)           // ← PRIMER emit
         val cached = readLocal()
-        if (cached.isNotEmpty()) {
-            emit(UiState.Success(cached))
-        }
+        if (cached.isNotEmpty()) emit(UiState.Success(cached))  // ← SEGUNDO emit (solo si hay caché)
+        val remote = dataSource.fetchAll()
+        if (remote.isNotEmpty()) emit(UiState.Success(remote))  // ← TERCER emit
 
         // 2. Refresco desde Firestore; si falla, se conserva la copia local.
         try {

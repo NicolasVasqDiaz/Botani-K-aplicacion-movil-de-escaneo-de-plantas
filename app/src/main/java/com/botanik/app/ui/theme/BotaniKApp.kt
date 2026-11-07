@@ -126,10 +126,13 @@ fun BotaniKApp() {
                 composable(BotaniKRoute.ScanHome.route) {
                     ScanScreen(
                         onBrowseCatalog = {
-                            navController.navigate(BotaniKRoute.Catalog.route)
+                            navController.navigate(BotaniKRoute.Catalog.createRoute(null))
                         },
                         onPhotoReady = { photoUri ->
                             navController.navigate(BotaniKRoute.Catalog.createRoute(photoUri))
+                        },
+                        onNavigateToPlantDetail = { plantId, photoUrl ->
+                            navController.navigate(BotaniKRoute.PlantDetail.createRoute(plantId, photoUrl))
                         }
                     )
                 }

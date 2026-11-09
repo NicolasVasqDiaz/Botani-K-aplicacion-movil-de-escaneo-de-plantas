@@ -3,11 +3,15 @@ package com.botanik.app.di
 import com.botanik.app.data.repository.AuthRepositoryImpl
 import com.botanik.app.data.repository.CatalogRepositoryImpl
 import com.botanik.app.data.repository.CloudinaryRepositoryImpl
+import com.botanik.app.data.repository.CustomSpeciesRepositoryImpl
+import com.botanik.app.data.repository.FeedbackRepositoryImpl
 import com.botanik.app.data.repository.GardenRepositoryImpl
 import com.botanik.app.data.repository.UserRepositoryImpl
 import com.botanik.app.domain.repository.AuthRepository
 import com.botanik.app.domain.repository.CatalogRepository
 import com.botanik.app.domain.repository.CloudinaryRepository
+import com.botanik.app.domain.repository.CustomSpeciesRepository
+import com.botanik.app.domain.repository.FeedbackRepository
 import com.botanik.app.domain.repository.GardenRepository
 import com.botanik.app.domain.repository.UserRepository
 import dagger.Binds
@@ -39,4 +43,11 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCloudinaryRepository(impl: CloudinaryRepositoryImpl): CloudinaryRepository
+
+    @Binds
+    abstract fun bindCustomSpeciesRepository(impl: CustomSpeciesRepositoryImpl): CustomSpeciesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFeedbackRepository(impl: FeedbackRepositoryImpl): FeedbackRepository
 }

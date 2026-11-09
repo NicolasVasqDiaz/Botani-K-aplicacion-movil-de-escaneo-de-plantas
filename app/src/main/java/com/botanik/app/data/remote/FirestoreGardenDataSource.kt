@@ -3,6 +3,7 @@ package com.botanik.app.data.remote
 import com.botanik.app.domain.model.GardenPlant
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -16,7 +17,6 @@ class FirestoreGardenDataSource @Inject constructor(
     private fun gardenCollection(uid: String) =
         firestore.collection("users").document(uid).collection("garden")
 
-    /** Observa en tiempo real el jardín del usuario. Limpia el listener con awaitClose. */
     fun observeGarden(uid: String): Flow<List<GardenPlant>> = callbackFlow {
         val registration = gardenCollection(uid).addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -31,26 +31,34 @@ class FirestoreGardenDataSource @Inject constructor(
 
     suspend fun addPlant(uid: String, plant: GardenPlant): String {
         val docRef = gardenCollection(uid).document(plant.gardenPlantId)
-        docRef.set(
-            mapOf(
-                "catalogPlantId" to plant.catalogPlantId,
-                "commonName" to plant.commonName,
-                "scientificName" to plant.scientificName,
-                "family" to plant.family,
-                "region" to plant.region,
-                "floweringSeason" to plant.floweringSeason,
-                "care" to plant.care,
-                "funFacts" to plant.funFacts,
-                "userPhotoUrl" to plant.userPhotoUrl,
-                "savedAt" to plant.savedAt
-            )
-        ).await()
+        docRef.set(plant.toFirestoreMap()).await()
         return docRef.id
+    }
+
+    /** Actualiza una planta existente (usado al corregir feedback). */
+    suspend fun updatePlant(uid: String, plant: GardenPlant) {
+        gardenCollection(uid).document(plant.gardenPlantId)
+            .set(plant.toFirestoreMap(), SetOptions.merge())
+            .await()
     }
 
     suspend fun deletePlant(uid: String, gardenPlantId: String) {
         gardenCollection(uid).document(gardenPlantId).delete().await()
     }
+
+    private fun GardenPlant.toFirestoreMap(): Map<String, Any?> = mapOf(
+        "catalogPlantId" to catalogPlantId,
+        "commonName" to commonName,
+        "scientificName" to scientificName,
+        "family" to family,
+        "region" to region,
+        "floweringSeason" to floweringSeason,
+        "care" to care,
+        "funFacts" to funFacts,
+        "userPhotoUrl" to userPhotoUrl,
+        "savedAt" to savedAt,
+        "mlConfidence" to mlConfidence
+    )
 
     @Suppress("UNCHECKED_CAST")
     private fun DocumentSnapshot.toGardenPlant(): GardenPlant? {
@@ -66,7 +74,8 @@ class FirestoreGardenDataSource @Inject constructor(
             care = toCareMap(),
             funFacts = (get("funFacts") as? List<String>) ?: emptyList(),
             userPhotoUrl = getString("userPhotoUrl"),
-            savedAt = getLong("savedAt") ?: 0L
+            savedAt = getLong("savedAt") ?: 0L,
+            mlConfidence = getDouble("mlConfidence")?.toFloat()
         )
     }
 

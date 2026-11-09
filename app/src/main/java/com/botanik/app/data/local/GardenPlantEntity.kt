@@ -15,5 +15,6 @@ data class GardenPlantEntity(
     val careJson: String,
     val funFactsJson: String,
     val userPhotoUrl: String?,
-    val savedAt: Long
+    val savedAt: Long,
+    val mlConfidence: Float? = null
 )

@@ -2,21 +2,26 @@ package com.botanik.app.ui.scan
 
 import android.content.Context
 import android.net.Uri
-import kotlinx.coroutines.flow.first
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.botanik.app.data.remote.PlantIdentifier
 import com.botanik.app.domain.model.CatalogPlant
+import com.botanik.app.domain.model.CustomSpecies
 import com.botanik.app.domain.model.PlantIdentification
 import com.botanik.app.domain.repository.CatalogRepository
 import com.botanik.app.domain.repository.CloudinaryRepository
+import com.botanik.app.domain.repository.CustomSpeciesRepository
+import com.botanik.app.domain.repository.GardenRepository
 import com.botanik.app.ui.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 sealed interface ScanUiState {
@@ -30,14 +35,18 @@ sealed interface ScanUiState {
         val photoUri: String,
         val cloudinaryUrl: String
     ) : ScanUiState
-    data class Matched(                              // ← NUEVO
+    data class Matched(
         val plantId: String,
-        val photoUrl: String
+        val photoUrl: String,
+        val mlConfidence: Float
     ) : ScanUiState
     data class ShowingCatalogFallback(
         val scientificName: String,
-        val cloudinaryUrl: String
+        val cloudinaryUrl: String,
+        val confidence: Float
     ) : ScanUiState
+    data object SavingCustomSpecies : ScanUiState
+    data object CustomSpeciesSaved : ScanUiState
     data object UploadingPhoto : ScanUiState
     data class PhotoReady(val photoUri: String) : ScanUiState
     data class Error(val message: String) : ScanUiState
@@ -48,11 +57,14 @@ class ScanViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val cloudinaryRepository: CloudinaryRepository,
     private val plantIdentifier: PlantIdentifier,
-    private val catalogRepository: CatalogRepository
+    private val catalogRepository: CatalogRepository,
+    private val customSpeciesRepository: CustomSpeciesRepository,
+    private val gardenRepository: GardenRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ScanUiState>(ScanUiState.Idle)
     val uiState: StateFlow<ScanUiState> = _uiState.asStateFlow()
+
     init {
         viewModelScope.launch {
             val state = catalogRepository.getAll().first { it !is UiState.Loading }
@@ -63,6 +75,7 @@ class ScanViewModel @Inject constructor(
             }
         }
     }
+
     fun onScanClick() {
         _uiState.value = ScanUiState.ShowingSourceSheet
     }
@@ -90,12 +103,10 @@ class ScanViewModel @Inject constructor(
             val uriString = uri.toString()
 
             if (identifications == null || identifications.isEmpty()) {
-                // Sin identificación: flujo actual (subir + navegar a catálogo)
                 uploadToCloudinary(uri)
                 return@launch
             }
 
-            // Subir foto a Cloudinary
             cloudinaryRepository.uploadImage(context, uri).fold(
                 onSuccess = { url ->
                     _uiState.value = ScanUiState.Identified(
@@ -111,11 +122,6 @@ class ScanViewModel @Inject constructor(
         }
     }
 
-    /**
-     * El usuario eligió una identificación del diálogo top-3.
-     * Si está en el catálogo → navega (gestionado por la Screen).
-     * Si NO está → emite ShowingCatalogFallback.
-     */
     fun onIdentificationSelected(identification: PlantIdentification) {
         val currentState = _uiState.value as? ScanUiState.Identified ?: return
         viewModelScope.launch {
@@ -123,22 +129,19 @@ class ScanViewModel @Inject constructor(
             _uiState.value = if (match != null) {
                 ScanUiState.Matched(
                     plantId = match.id,
-                    photoUrl = currentState.cloudinaryUrl
+                    photoUrl = currentState.cloudinaryUrl,
+                    mlConfidence = identification.confidence
                 )
             } else {
                 ScanUiState.ShowingCatalogFallback(
                     scientificName = identification.scientificName,
-                    cloudinaryUrl = currentState.cloudinaryUrl
+                    cloudinaryUrl = currentState.cloudinaryUrl,
+                    confidence = identification.confidence
                 )
             }
         }
     }
 
-    /**
-     * Mapeo explícito de labels del modelo específico → IDs del catálogo en Firestore.
-     * Necesario porque las carpetas del dataset usan nombres cortos/guion_bajo
-     * mientras los IDs del catálogo usan nombres largos/guion.
-     */
     private val labelToCatalogId = mapOf(
         "aliso" to "aliso",
         "amancaes" to "amancaes",
@@ -183,7 +186,6 @@ class ScanViewModel @Inject constructor(
     )
 
     private suspend fun findCatalogMatch(identifiedName: String): CatalogPlant? {
-        // Esperar al primer estado que NO sea Loading (Success, Empty o Error)
         val state = catalogRepository.getAll().first { it !is UiState.Loading }
         val plants = (state as? UiState.Success)?.data ?: return null
         if (plants.isEmpty()) return null
@@ -191,38 +193,31 @@ class ScanViewModel @Inject constructor(
         val label = identifiedName.trim().lowercase()
         val labelSpaced = label.replace("_", " ")
 
-        // 1. Mapeo explícito (label del modelo → ID del catálogo)
         labelToCatalogId[label]?.let { catalogId ->
             plants.firstOrNull { it.id == catalogId }?.let { return it }
         }
 
-        // 2. Match por ID exacto (normalizado: guion_bajo → guion)
         val normalizedHyphen = label.replace("_", "-")
         plants.firstOrNull {
             it.id.trim().lowercase().replace("_", "-") == normalizedHyphen
         }?.let { return it }
 
-        // 3. Match por nombre científico exacto (modelo global: "Cantua buxifolia")
         plants.firstOrNull {
             it.scientificName.trim().lowercase() == label
         }?.let { return it }
 
-        // 4. Match por nombre común exacto
         plants.firstOrNull {
             it.commonName.trim().lowercase() == label
         }?.let { return it }
 
-        // 5. Match por nombre común con espacios
         plants.firstOrNull {
             it.commonName.trim().lowercase() == labelSpaced
         }?.let { return it }
 
-        // 6. Match por nombre común parcial ("papa andina" ⊂ "papa andina silvestre")
         plants.firstOrNull {
             labelSpaced.length >= 4 && it.commonName.trim().lowercase().contains(labelSpaced)
         }?.let { return it }
 
-        // 7. Match por nombre científico parcial
         plants.firstOrNull {
             labelSpaced.length >= 4 && it.scientificName.trim().lowercase().contains(labelSpaced)
         }?.let { return it }
@@ -239,6 +234,58 @@ class ScanViewModel @Inject constructor(
                 },
                 onFailure = { e ->
                     _uiState.value = ScanUiState.Error(e.message ?: "No pudimos subir la foto")
+                }
+            )
+        }
+    }
+
+    fun saveAsCustomSpecies() {
+        val currentState = _uiState.value
+        if (currentState !is ScanUiState.ShowingCatalogFallback) return
+
+        viewModelScope.launch {
+            _uiState.value = ScanUiState.SavingCustomSpecies
+
+            val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            if (uid == null) {
+                _uiState.value = ScanUiState.Error("Sesión no iniciada")
+                return@launch
+            }
+
+            val species = CustomSpecies(
+                speciesId = UUID.randomUUID().toString(),
+                scientificName = currentState.scientificName,
+                commonName = currentState.scientificName,
+                family = "",
+                region = "",
+                floweringSeason = "",
+                care = emptyMap(),
+                funFacts = emptyList(),
+                imageUrl = currentState.cloudinaryUrl,
+                isEndemic = false,
+                source = "ml_identification",
+                confidence = currentState.confidence,
+                createdBy = uid,
+                createdAt = System.currentTimeMillis()
+            )
+
+            customSpeciesRepository.saveCustomSpecies(species).fold(
+                onSuccess = {
+                    gardenRepository.saveCustomPlant(
+                        species = species,
+                        userPhotoUrl = currentState.cloudinaryUrl,
+                        mlConfidence = currentState.confidence
+                    ).fold(
+                        onSuccess = {
+                            _uiState.value = ScanUiState.CustomSpeciesSaved
+                        },
+                        onFailure = { e ->
+                            _uiState.value = ScanUiState.Error(e.message ?: "Error al guardar en Mi Jardín")
+                        }
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = ScanUiState.Error(e.message ?: "Error al guardar la especie")
                 }
             )
         }

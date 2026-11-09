@@ -116,6 +116,7 @@ private fun CandidateRow(
 @Composable
 fun CatalogFallbackDialog(
     scientificName: String,
+    onSaveAsCustom: () -> Unit,
     onSearchCatalog: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -132,17 +133,27 @@ fun CatalogFallbackDialog(
                     color = PrimaryGreen
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("Esta especie no está en nuestro catálogo actual.")
+                Text("Esta especie no está en nuestro catálogo actual. Puedes guardarla en tu jardín personal o buscar una similar.")
             }
         },
         confirmButton = {
-            TextButton(onClick = onSearchCatalog) {
-                Text("Buscar en catálogo")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+            Column(horizontalAlignment = Alignment.End) {
+                Button(
+                    onClick = onSaveAsCustom,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                ) {
+                    Text("Guardar esta especie", color = Color.White)
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onSearchCatalog) {
+                        Text("Buscar en catálogo")
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancelar")
+                    }
+                }
             }
         }
     )

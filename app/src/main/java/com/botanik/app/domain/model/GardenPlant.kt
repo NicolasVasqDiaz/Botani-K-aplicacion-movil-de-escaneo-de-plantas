@@ -11,5 +11,6 @@ data class GardenPlant(
     val care: Map<String, String>,
     val funFacts: List<String>,
     val userPhotoUrl: String?,
-    val savedAt: Long
+    val savedAt: Long,
+    val mlConfidence: Float? = null
 )

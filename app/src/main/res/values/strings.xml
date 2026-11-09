@@ -4,4 +4,8 @@
          Proyecto botani-k > Authentication > Sign-in method > Google > ID de cliente web.
          Sin este valor el botón Google mostrará un aviso de configuración. -->
     <string name="default_web_client_id">143007902625-m1m35re0nkcpd8rvpbmrmea8er1inotb.apps.googleusercontent.com</string>
+    <string name="scan_save_custom_species">Guardar esta especie</string>
+    <string name="scan_custom_saving">Guardando especie…</string>
+    <string name="scan_custom_saved">Especie guardada en Mi Jardín</string>
+    <string name="scan_custom_error">No pudimos guardar la especie. Intenta de nuevo.</string>
 </resources>

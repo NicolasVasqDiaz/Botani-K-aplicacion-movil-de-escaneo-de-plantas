@@ -131,8 +131,15 @@ fun BotaniKApp() {
                         onPhotoReady = { photoUri ->
                             navController.navigate(BotaniKRoute.Catalog.createRoute(photoUri))
                         },
-                        onNavigateToPlantDetail = { plantId, photoUrl ->
-                            navController.navigate(BotaniKRoute.PlantDetail.createRoute(plantId, photoUrl))
+                        onNavigateToPlantDetail = { plantId, photoUrl, mlConfidence ->
+                            navController.navigate(
+                                BotaniKRoute.PlantDetail.createRoute(plantId, photoUrl, mlConfidence)
+                            )
+                        },
+                        onNavigateToGarden = {
+                            navController.navigate(BotaniKRoute.Garden.route) {
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -163,10 +170,13 @@ fun BotaniKApp() {
                 composable(
                     route = BotaniKRoute.PlantDetail.route,
                     arguments = listOf(
-                        navArgument(BotaniKRoute.PlantDetail.ARG_PLANT_ID) {
-                            type = NavType.StringType
-                        },
+                        navArgument(BotaniKRoute.PlantDetail.ARG_PLANT_ID) { type = NavType.StringType },
                         navArgument(BotaniKRoute.PlantDetail.ARG_USER_PHOTO_URL) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                        navArgument(BotaniKRoute.PlantDetail.ARG_ML_CONFIDENCE) {
                             type = NavType.StringType
                             nullable = true
                             defaultValue = null
@@ -175,12 +185,16 @@ fun BotaniKApp() {
                 ) { backStackEntry ->
                     val plantId = backStackEntry.arguments?.getString(BotaniKRoute.PlantDetail.ARG_PLANT_ID)
                     val userPhotoUrl = backStackEntry.arguments?.getString(BotaniKRoute.PlantDetail.ARG_USER_PHOTO_URL)
+                    val mlConfidenceStr = backStackEntry.arguments?.getString(BotaniKRoute.PlantDetail.ARG_ML_CONFIDENCE)
+                    val mlConfidence = mlConfidenceStr?.toFloatOrNull()
+
                     if (plantId == null) {
                         LaunchedEffect(Unit) { navController.popBackStack() }
                     } else {
                         PlantDetailScreen(
                             plantId = plantId,
                             userPhotoUrl = userPhotoUrl?.ifEmpty { null },
+                            mlConfidence = mlConfidence,
                             onBack = { navController.popBackStack() },
                             onGoToGarden = {
                                 navController.navigate(BotaniKRoute.Garden.route) {

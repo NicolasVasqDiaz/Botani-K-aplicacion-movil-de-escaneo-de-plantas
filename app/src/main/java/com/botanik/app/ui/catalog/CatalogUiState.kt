@@ -7,7 +7,7 @@ enum class CatalogFilter(val label: String) {
     ALL("Todas"),
     ENDEMIC("Endémicas de Cajamarca"),
     JALCA("Flores de la Jalca"),
-    TREES("Árboles nativos"),
+    TREES("Árboles"),
     MEDICINAL("Medicinales")
 }
 
@@ -15,17 +15,14 @@ data class CatalogUiState(
     val searchQuery: String = "",
     val activeFilter: CatalogFilter = CatalogFilter.ALL,
     val plants: UiState<List<CatalogPlant>> = UiState.Loading,
-    /**
-     * Cantidad de plantas visibles en el catálogo.
-     *
-     * Qué:    número de plantas que el usuario está viendo ahora mismo.
-     * Cómo:   se calcula en [CatalogViewModel] a partir de la lista ya
-     *         filtrada (búsqueda por texto + filtro por categoría).
-     * Por qué: se expone aquí para cumplir la regla de *state hoisting* del
-     *         proyecto — la pantalla dibuja el texto a partir del estado,
-     *         sin lógica de conteo dentro del Composable.
-     */
     val plantCount: Int = 0,
-    /** Indica que el catálogo se está mostrando desde la caché local (sin conexión). */
-    val isFromCache: Boolean = false
+    val isFromCache: Boolean = false,
+    /** Región seleccionada en los chips dinámicos. null = "Todas". */
+    val selectedRegion: String? = null,
+    /** Familia seleccionada en los chips dinámicos. null = "Todas". */
+    val selectedFamily: String? = null,
+    /** Regiones disponibles (extraídas dinámicamente del catálogo). */
+    val availableRegions: List<String> = emptyList(),
+    /** Familias disponibles (extraídas dinámicamente del catálogo). */
+    val availableFamilies: List<String> = emptyList()
 )

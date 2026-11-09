@@ -8,6 +8,7 @@ import com.botanik.app.data.local.CatalogPreloader
 import com.botanik.app.data.local.GardenDao
 import com.botanik.app.data.local.GardenTypeConverters
 import com.botanik.app.data.local.LocalUserDao
+import com.botanik.app.data.local.PlantNoteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,9 +23,12 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): BotaniKDatabase =
-        // fallbackToDestructiveMigration: aceptable solo en desarrollo (MVP universitario sin usuarios reales todavía).
         Room.databaseBuilder(context, BotaniKDatabase::class.java, "botanik_db")
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(
+                BotaniKDatabase.MIGRATION_3_4,
+                BotaniKDatabase.MIGRATION_4_5,
+                BotaniKDatabase.MIGRATION_5_6
+            )
             .build()
 
     @Provides
@@ -35,6 +39,9 @@ object DatabaseModule {
 
     @Provides
     fun provideCatalogDao(db: BotaniKDatabase): CatalogDao = db.catalogDao()
+
+    @Provides
+    fun providePlantNoteDao(db: BotaniKDatabase): PlantNoteDao = db.plantNoteDao()
 
     @Provides
     @Singleton

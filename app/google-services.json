@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "143007902625-8u6aftehe2qlt3k5edb97ti8p59eh3mf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.botanik.app",
+            "certificate_hash": "98985a3cbf62b7bbf119fa55408b62d4957eba28"
+          }
+        },
+        {
+          "client_id": "143007902625-ekjfptg1gf6qdop9m583k7un4knmo71j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.botanik.app",
+            "certificate_hash": "d6b6988c7b8f69cdce96b5a3431f9f829ce260ff"
+          }
+        },
+        {
+          "client_id": "143007902625-lfau6t8knlb67jrmbvkchg5itcurskuq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.botanik.app",
+            "certificate_hash": "bfde3f572922cf67b4d85be885b03e02d13d55ed"
+          }
+        },
+        {
           "client_id": "143007902625-q0bn1orl0mf8idak3pv58jeikffi6lh4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

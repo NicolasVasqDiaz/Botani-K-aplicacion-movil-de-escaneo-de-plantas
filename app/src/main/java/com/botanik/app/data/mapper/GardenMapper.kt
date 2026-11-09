@@ -20,7 +20,9 @@ class GardenMapper @Inject constructor(
         funFacts = converters.toFunFactsList(funFactsJson),
         userPhotoUrl = userPhotoUrl,
         savedAt = savedAt,
-        mlConfidence = mlConfidence
+        mlConfidence = mlConfidence,
+        reminderEnabled = reminderEnabled,
+        reminderFrequencyDays = reminderFrequencyDays
     )
 
     fun GardenPlant.toEntity(): GardenPlantEntity = GardenPlantEntity(
@@ -35,6 +37,8 @@ class GardenMapper @Inject constructor(
         funFactsJson = converters.fromFunFactsList(funFacts),
         userPhotoUrl = userPhotoUrl,
         savedAt = savedAt,
-        mlConfidence = mlConfidence
+        mlConfidence = mlConfidence,
+        reminderEnabled = reminderEnabled,
+        reminderFrequencyDays = reminderFrequencyDays
     )
 }

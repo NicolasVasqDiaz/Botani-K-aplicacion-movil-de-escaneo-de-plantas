@@ -12,5 +12,7 @@ data class GardenPlant(
     val funFacts: List<String>,
     val userPhotoUrl: String?,
     val savedAt: Long,
-    val mlConfidence: Float? = null
+    val mlConfidence: Float? = null,
+    val reminderEnabled: Boolean = false,
+    val reminderFrequencyDays: Int = 7
 )

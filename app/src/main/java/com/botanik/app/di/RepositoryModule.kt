@@ -14,6 +14,8 @@ import com.botanik.app.domain.repository.CustomSpeciesRepository
 import com.botanik.app.domain.repository.FeedbackRepository
 import com.botanik.app.domain.repository.GardenRepository
 import com.botanik.app.domain.repository.UserRepository
+import com.botanik.app.data.repository.ReminderRepositoryImpl
+import com.botanik.app.domain.repository.ReminderRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -50,4 +52,7 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindFeedbackRepository(impl: FeedbackRepositoryImpl): FeedbackRepository
+    @Binds
+    @Singleton
+    abstract fun bindReminderRepository(impl: ReminderRepositoryImpl): ReminderRepository
 }

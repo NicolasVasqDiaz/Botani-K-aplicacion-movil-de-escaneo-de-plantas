@@ -2,6 +2,7 @@ package com.botanik.app.ui.plantdetail
 
 import com.botanik.app.domain.model.CatalogPlant
 import com.botanik.app.domain.model.GardenPlant
+import com.botanik.app.domain.model.PlantNote
 
 data class PlantDetailUiState(
     val plant: CatalogPlant? = null,
@@ -18,5 +19,8 @@ data class PlantDetailUiState(
     val hasSubmittedFeedback: Boolean = false,
     val showCatalogPicker: Boolean = false,
     val catalogForPicker: List<CatalogPlant> = emptyList(),
-    val feedbackErrorMessage: String? = null
+    val feedbackErrorMessage: String? = null,
+    val isUpdatingReminder: Boolean = false,
+    val reminderErrorMessage: String? = null,
+    val notes: List<PlantNote> = emptyList()
 )

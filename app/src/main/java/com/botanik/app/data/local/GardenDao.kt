@@ -29,4 +29,7 @@ interface GardenDao {
 
     @Query("DELETE FROM garden_plants")
     suspend fun clear()
+
+    @Query("SELECT * FROM garden_plants WHERE reminderEnabled = 1")
+    suspend fun getPlantsWithReminder(): List<GardenPlantEntity>
 }

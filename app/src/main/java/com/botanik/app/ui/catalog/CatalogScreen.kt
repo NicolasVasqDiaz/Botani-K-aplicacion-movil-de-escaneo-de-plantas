@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material3.*
@@ -30,8 +29,6 @@ import coil.compose.AsyncImage
 import com.botanik.app.domain.model.CatalogPlant
 import com.botanik.app.ui.common.UiState
 import com.botanik.app.ui.theme.*
-import com.google.firebase.firestore.AggregateField
-import com.google.firebase.firestore.AggregateField.count
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +37,7 @@ fun CatalogScreen(
     onBack: () -> Unit,
     onPlantSelected: (CatalogPlant) -> Unit,
     viewModel: CatalogViewModel = hiltViewModel()
-
 ) {
-
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -61,35 +56,59 @@ fun CatalogScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             SearchField(query = uiState.searchQuery, onQueryChange = viewModel::onSearchChange)
-            FilterChipsRow(active = uiState.activeFilter, onFilterChange = viewModel::onFilterChange)
-            // Contador de plantas visibles: se dibuja entre los filtros y la
-            // lista para que el usuario sepa cuántas plantas está viendo
-            // (con la búsqueda y el filtro actuales) antes de elegir una.
+
+            // Fila 1: categorías rápidas (existente)
+            CategoryChipsRow(
+                active = uiState.activeFilter,
+                onFilterChange = viewModel::onFilterChange
+            )
+
+            // Fila 2: filtro por región (NUEVO)
+            if (uiState.availableRegions.isNotEmpty()) {
+                DynamicChipsRow(
+                    label = "Región:",
+                    options = uiState.availableRegions,
+                    selected = uiState.selectedRegion,
+                    onSelect = viewModel::onRegionSelected
+                )
+            }
+
+            // Fila 3: filtro por familia (NUEVO)
+            if (uiState.availableFamilies.isNotEmpty()) {
+                DynamicChipsRow(
+                    label = "Familia:",
+                    options = uiState.availableFamilies,
+                    selected = uiState.selectedFamily,
+                    onSelect = viewModel::onFamilySelected
+                )
+            }
+
             CatalogCount(count = uiState.plantCount)
-            // Aviso de modo offline: el catálogo se está mostrando desde la
-            // copia local descargada previamente en el dispositivo.
+
             if (uiState.isFromCache) {
                 OfflineBanner()
             }
+
             when (val state = uiState.plants) {
                 is UiState.Loading -> CatalogLoading()
-                is UiState.Empty -> CatalogEmpty(onReset = { viewModel.onSearchChange("") })
-                is UiState.Error -> CatalogEmpty(onReset = { viewModel.onSearchChange("") })
+                is UiState.Empty -> CatalogEmpty(onReset = {
+                    viewModel.onSearchChange("")
+                    viewModel.onFilterChange(CatalogFilter.ALL)
+                    viewModel.onRegionSelected(null)
+                    viewModel.onFamilySelected(null)
+                })
+                is UiState.Error -> CatalogEmpty(onReset = {
+                    viewModel.onSearchChange("")
+                    viewModel.onFilterChange(CatalogFilter.ALL)
+                    viewModel.onRegionSelected(null)
+                    viewModel.onFamilySelected(null)
+                })
                 is UiState.Success -> CatalogList(plants = state.data, onPlantSelected = onPlantSelected)
             }
         }
     }
 }
-/**
- * Contador de plantas endémicas mostradas en el catálogo.
- *
- * Qué:    muestra cuántos resultados tiene el usuario a la vista.
- * Cómo:   recibe el número ya calculado desde el ViewModel y arma el texto
- *         con singular/plural según el valor.
- * Por qué: el conteo NO se calcula aquí — vive en el ViewModel, respetando
- *         la regla de *state hoisting* del proyecto. Este Composable solo
- *         traduce el número a texto y lo dibuja.
- */
+
 @Composable
 private fun CatalogCount(count: Int) {
     val label = if (count == 1) "1 planta encontrada" else "$count plantas encontradas"
@@ -100,7 +119,7 @@ private fun CatalogCount(count: Int) {
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
     )
 }
-/* funcion composable para mostrar el conteo de plantas*/
+
 @Composable
 private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
@@ -121,7 +140,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 @Composable
-private fun FilterChipsRow(active: CatalogFilter, onFilterChange: (CatalogFilter) -> Unit) {
+private fun CategoryChipsRow(active: CatalogFilter, onFilterChange: (CatalogFilter) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -140,6 +159,61 @@ private fun FilterChipsRow(active: CatalogFilter, onFilterChange: (CatalogFilter
                 ),
                 shape = RoundedCornerShape(50)
             )
+        }
+    }
+}
+
+/**
+ * Fila de chips dinámicos: "Todas" + opciones extraídas del catálogo.
+ */
+@Composable
+private fun DynamicChipsRow(
+    label: String,
+    options: List<String>,
+    selected: String?,
+    onSelect: (String?) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = TextPrimary.copy(alpha = 0.7f),
+            modifier = Modifier.padding(end = 8.dp)
+        )
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                FilterChip(
+                    selected = selected == null,
+                    onClick = { onSelect(null) },
+                    label = { Text("Todas") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = SecondaryGreen,
+                        selectedLabelColor = SurfaceWhite,
+                        containerColor = SurfaceWhite,
+                        labelColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(50)
+                )
+            }
+            items(options) { option ->
+                FilterChip(
+                    selected = selected == option,
+                    onClick = { onSelect(option) },
+                    label = { Text(option) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = SecondaryGreen,
+                        selectedLabelColor = SurfaceWhite,
+                        containerColor = SurfaceWhite,
+                        labelColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(50)
+                )
+            }
         }
     }
 }
@@ -218,24 +292,22 @@ private fun CatalogEmpty(onReset: () -> Unit) {
                 Icon(Icons.Rounded.Spa, contentDescription = null, tint = PrimaryGreen)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text("No encontramos esa planta 🌱",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary)
             Text(
-                "Intenta con otro nombre común, familia taxonómica o verifica la ortografía.",
+                "No encontramos esa planta 🌱",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary
+            )
+            Text(
+                "Prueba con otro nombre o limpia los filtros.",
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onReset) { Text("Restablecer búsqueda", color = PrimaryGreen) }
+            TextButton(onClick = onReset) { Text("Limpiar filtros", color = PrimaryGreen) }
         }
     }
 }
 
-/**
- * Aviso de que el catálogo se está mostrando desde la copia local.
- * Se muestra cuando no hay conexión y los datos provienen de la caché.
- */
 @Composable
 private fun OfflineBanner() {
     Surface(

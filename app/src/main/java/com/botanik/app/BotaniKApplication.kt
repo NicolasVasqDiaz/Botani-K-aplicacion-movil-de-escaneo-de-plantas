@@ -1,21 +1,30 @@
 package com.botanik.app
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
+import com.botanik.app.ui.notification.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
-/**
- * Application de Botani-k.
- *
- * Implementa [ImageLoaderFactory] para que Coil use el [ImageLoader] definido
- * aquí en lugar de crear el suyo por defecto. Esto permite registrar el
- * decodificador SVG, necesario para mostrar los placeholders del catálogo
- * (que `placehold.co` sirve como SVG) y cualquier otro recurso vectorial.
- */
 @HiltAndroidApp
-class BotaniKApplication : Application(), ImageLoaderFactory {
+class BotaniKApplication : Application(), ImageLoaderFactory, Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
+    override fun onCreate() {
+        super.onCreate()
+        NotificationHelper.createChannel(this)
+    }
 
     override fun newImageLoader(): ImageLoader =
         ImageLoader.Builder(this)

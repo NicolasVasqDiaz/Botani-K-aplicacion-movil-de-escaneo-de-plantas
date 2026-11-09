@@ -3,6 +3,7 @@ package com.botanik.app.domain.repository
 import com.botanik.app.domain.model.CatalogPlant
 import com.botanik.app.domain.model.CustomSpecies
 import com.botanik.app.domain.model.GardenPlant
+import com.botanik.app.domain.model.PlantNote
 import com.botanik.app.ui.common.UiState
 import kotlinx.coroutines.flow.Flow
 
@@ -23,12 +24,23 @@ interface GardenRepository {
     ): Result<Unit>
 
     suspend fun deletePlant(gardenPlantId: String): Result<Unit>
-    suspend fun getSavedPlant(catalogPlantId: String): GardenPlant?
-
+    suspend fun getSavedPlant(id: String): GardenPlant?
     suspend fun getGardenPlantById(gardenPlantId: String): GardenPlant?
 
     suspend fun correctGardenPlant(
         gardenPlantId: String,
         corrected: CatalogPlant
     ): Result<Unit>
+
+    suspend fun updateReminder(
+        gardenPlantId: String,
+        enabled: Boolean,
+        frequencyDays: Int
+    ): Result<Unit>
+
+    suspend fun getPlantsWithReminder(): List<GardenPlant>
+
+    // NOTAS
+    suspend fun getNotesForPlant(gardenPlantId: String): List<PlantNote>
+    suspend fun addNote(note: PlantNote): Result<Unit>
 }

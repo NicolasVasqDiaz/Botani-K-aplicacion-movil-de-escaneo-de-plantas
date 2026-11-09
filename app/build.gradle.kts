@@ -94,7 +94,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material3:material3")
-
+    // WorkManager + Hilt-Work (Bloque 7C: notificaciones reales)
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

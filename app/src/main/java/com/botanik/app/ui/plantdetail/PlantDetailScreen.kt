@@ -1,5 +1,10 @@
 package com.botanik.app.ui.plantdetail
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,9 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.botanik.app.ui.theme.*
@@ -38,90 +45,46 @@ fun PlantDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    LaunchedEffect(plantId) {
-        viewModel.loadPlantById(plantId, userPhotoUrl, mlConfidence)
-    }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) viewModel.toggleReminder() }
 
-    LaunchedEffect(uiState.hasSubmittedFeedback) {
-        if (uiState.hasSubmittedFeedback) {
-            snackbarHostState.showSnackbar("¡Gracias por tu feedback!")
-        }
-    }
-
-    LaunchedEffect(uiState.feedbackErrorMessage) {
-        uiState.feedbackErrorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.onFeedbackErrorShown()
-        }
-    }
+    LaunchedEffect(plantId) { viewModel.loadPlantById(plantId, userPhotoUrl, mlConfidence) }
+    LaunchedEffect(uiState.hasSubmittedFeedback) { if (uiState.hasSubmittedFeedback) snackbarHostState.showSnackbar("¡Gracias por tu feedback!") }
+    LaunchedEffect(uiState.feedbackErrorMessage) { uiState.feedbackErrorMessage?.let { snackbarHostState.showSnackbar(it); viewModel.onFeedbackErrorShown() } }
+    LaunchedEffect(uiState.reminderErrorMessage) { uiState.reminderErrorMessage?.let { snackbarHostState.showSnackbar(it); viewModel.onReminderErrorShown() } }
 
     if (uiState.plant == null) return
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().background(BackgroundCream).padding(padding)) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 if (uiState.isFromCache) {
                     Surface(color = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.CloudOff,
-                                contentDescription = null,
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
+                        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Sin conexión. Mostrando la copia guardada en tu dispositivo",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
+                            Text("Sin conexión. Mostrando la copia guardada", style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                         }
                     }
                 }
 
                 Box(modifier = Modifier.fillMaxWidth().height(260.dp).background(SecondaryGreen.copy(alpha = 0.25f))) {
                     if (uiState.userPhotoUrl != null) {
-                        AsyncImage(
-                            model = uiState.userPhotoUrl,
-                            contentDescription = "Foto de campo",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        AsyncImage(model = uiState.userPhotoUrl, contentDescription = "Foto", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     } else if (uiState.plant?.imageUrl != null) {
-                        AsyncImage(
-                            model = uiState.plant!!.imageUrl,
-                            contentDescription = uiState.plant!!.commonName,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        AsyncImage(model = uiState.plant!!.imageUrl, contentDescription = uiState.plant!!.commonName, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     }
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.padding(16.dp).size(40.dp)
-                            .background(Color.Black.copy(alpha = 0.35f), CircleShape)
-                    ) {
+                    IconButton(onClick = onBack, modifier = Modifier.padding(16.dp).size(40.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
                 }
 
-                Column(
-                    modifier = Modifier
-                        .offset(y = (-24).dp)
-                        .background(SurfaceWhite, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                        .padding(20.dp)
-                ) {
+                Column(modifier = Modifier.offset(y = (-24).dp).background(SurfaceWhite, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)).padding(20.dp)) {
                     Text(uiState.plant!!.commonName, style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-                    Text(
-                        uiState.plant!!.scientificName,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-                        color = SecondaryGreen
-                    )
+                    Text(uiState.plant!!.scientificName, style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic), color = SecondaryGreen)
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -131,12 +94,7 @@ fun PlantDetailScreen(
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
-                    ExpandableSection(
-                        title = "Cuidados y cultivo",
-                        subtitle = "Riego, insolación y sustrato andino",
-                        expanded = uiState.isCareExpanded,
-                        onToggle = viewModel::toggleCareExpanded
-                    ) {
+                    ExpandableSection("Cuidados y cultivo", "Riego, insolación y sustrato andino", uiState.isCareExpanded, viewModel::toggleCareExpanded) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             CareRow("Exposición solar", uiState.plant!!.care["light"] ?: "")
                             CareRow("Régimen hídrico", uiState.plant!!.care["water"] ?: "")
@@ -145,16 +103,9 @@ fun PlantDetailScreen(
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    ExpandableSection(
-                        title = "Historia y curiosidades",
-                        subtitle = "Significado cultural y ecología",
-                        expanded = uiState.isCultureExpanded,
-                        onToggle = viewModel::toggleCultureExpanded
-                    ) {
+                    ExpandableSection("Historia y curiosidades", "Significado cultural y ecología", uiState.isCultureExpanded, viewModel::toggleCultureExpanded) {
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            uiState.plant!!.funFacts.forEach { fact ->
-                                Text("• $fact", style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
-                            }
+                            uiState.plant!!.funFacts.forEach { fact -> Text("• $fact", style = MaterialTheme.typography.bodyMedium, color = TextPrimary) }
                         }
                     }
 
@@ -170,20 +121,43 @@ fun PlantDetailScreen(
                         }
                     }
 
-                    // FeedbackSection — solo si la planta está guardada Y tiene mlConfidence
                     val gardenPlant = uiState.gardenPlant
                     if (gardenPlant != null && gardenPlant.mlConfidence != null) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        FeedbackSection(
-                            hasFeedback = uiState.hasSubmittedFeedback,
-                            isSubmitting = uiState.isSubmittingFeedback,
-                            onPositive = viewModel::submitPositiveFeedback,
-                            onNegative = viewModel::onNegativeFeedbackClick
-                        )
+                        FeedbackSection(uiState.hasSubmittedFeedback, uiState.isSubmittingFeedback, viewModel::submitPositiveFeedback, viewModel::onNegativeFeedbackClick)
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-                    SaveButton(isSaved = uiState.isSavedToGarden, onSave = { viewModel.saveToGarden(); onGoToGarden() })
+                    // SECCIÓN CONDICIONAL: SI ESTÁ EN EL JARDÍN -> RECORDATORIOS + NOTAS, SINO -> GUARDAR
+                    if (gardenPlant != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ReminderSection(
+                            enabled = gardenPlant.reminderEnabled,
+                            frequencyDays = gardenPlant.reminderFrequencyDays,
+                            isUpdating = uiState.isUpdatingReminder,
+                            onToggle = { newEnabled ->
+                                if (newEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                                    if (hasPermission) viewModel.toggleReminder() else notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.toggleReminder()
+                                }
+                            },
+                            onFrequencyChange = viewModel::setReminderFrequency
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        NotesSection(notes = uiState.notes, onAddNote = viewModel::addNote)
+                    } else {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = { viewModel.saveToGarden(); onGoToGarden() },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                        ) {
+                            Text("💾 Guardar en Mi Jardín", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
                     Spacer(modifier = Modifier.height(80.dp))
                 }
             }
@@ -191,38 +165,7 @@ fun PlantDetailScreen(
     }
 
     if (uiState.showCatalogPicker) {
-        CatalogPickerDialog(
-            plants = uiState.catalogForPicker,
-            onSelect = viewModel::onCorrectSpeciesSelected,
-            onDismiss = viewModel::dismissCatalogPicker
-        )
-    }
-}
-
-@Composable
-private fun SaveButton(isSaved: Boolean, onSave: () -> Unit) {
-    if (isSaved) {
-        OutlinedButton(
-            onClick = {},
-            enabled = false,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, PrimaryGreen),
-            colors = ButtonDefaults.outlinedButtonColors(disabledContentColor = PrimaryGreen)
-        ) {
-            Icon(Icons.Rounded.Check, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Guardada", fontWeight = FontWeight.Bold)
-        }
-    } else {
-        Button(
-            onClick = onSave,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
-        ) {
-            Text("💾 Guardar en Mi Jardín", fontWeight = FontWeight.Bold, color = Color.White)
-        }
+        CatalogPickerDialog(uiState.catalogForPicker, viewModel::onCorrectSpeciesSelected, viewModel::dismissCatalogPicker)
     }
 }
 
@@ -232,37 +175,21 @@ private fun DetailChip(text: String) {
         Text(text, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium, color = TextPrimary)
     }
 }
-
 @Composable
-private fun ExpandableSection(
-    title: String,
-    subtitle: String,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    content: @Composable () -> Unit
-) {
+private fun ExpandableSection(title: String, subtitle: String, expanded: Boolean, onToggle: () -> Unit, content: @Composable () -> Unit) {
     Surface(color = SurfaceWhite, shape = RoundedCornerShape(16.dp), shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, fontWeight = FontWeight.Bold, color = TextPrimary)
                     Text(subtitle, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
                 }
-                IconButton(onClick = onToggle) {
-                    Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = PrimaryGreen)
-                }
+                IconButton(onClick = onToggle) { Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = PrimaryGreen) }
             }
-            AnimatedVisibility(visible = expanded) {
-                Column(modifier = Modifier.padding(top = 10.dp)) { content() }
-            }
+            AnimatedVisibility(visible = expanded) { Column(modifier = Modifier.padding(top = 10.dp)) { content() } }
         }
     }
 }
-
 @Composable
 private fun CareRow(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
